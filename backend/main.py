@@ -11,7 +11,7 @@ app = FastAPI()
 ALLOWED_ORIGINS = [
     o.strip() for o in os.environ.get(
         "ALLOWED_ORIGINS",
-        "http://localhost:5173,http://localhost:3000,http://localhost:8000"
+        "http://localhost:5173,http://localhost:3000,http://localhost:8000,https://portfolio-theta-neon-82.vercel.app"
     ).split(",") if o.strip()
 ]
 
