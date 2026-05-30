@@ -747,9 +747,8 @@
                 window.addEventListener('load', animateBars);
             })();
 
-            // Contact form: AJAX send via Flask backend (Render) + mailto fallback
-            // EDIT THIS to your deployed Render backend URL:
-            window.BACKEND_URL = window.BACKEND_URL || 'https://abdalla-portfolio-backend.onrender.com';
+            // Contact form: AJAX send via FastAPI backend (Render) + mailto fallback
+            window.BACKEND_URL = window.BACKEND_URL || 'https://portfolio-backend-aei1.onrender.com';
             (function () {
                 var form = document.getElementById('contact-form');
                 if (!form) return;
