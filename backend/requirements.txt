@@ -1,4 +1,4 @@
-Flask==3.0.3
-flask-cors==4.0.1
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+pydantic[email]==2.10.3
 requests==2.32.3
-gunicorn==22.0.0

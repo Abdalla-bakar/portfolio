@@ -1,9 +1,11 @@
 import os
 import requests
-from flask import Flask, request, jsonify
-from flask_cors import CORS
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, EmailStr
 
-app = Flask(__name__)
+app = FastAPI()
 
 # Allow your deployed frontend(s) + local dev
 ALLOWED_ORIGINS = [
@@ -12,31 +14,50 @@ ALLOWED_ORIGINS = [
         "http://localhost:5173,http://localhost:3000,http://localhost:8000"
     ).split(",") if o.strip()
 ]
-CORS(app, origins=ALLOWED_ORIGINS)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ALLOWED_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 MAIL_TO = os.environ.get("MAIL_TO", "abdallabakar311@gmail.com")
 MAIL_FROM = os.environ.get("MAIL_FROM", "onboarding@resend.dev")
 
 
-@app.route("/", methods=["GET"])
+class ContactPayload(BaseModel):
+    name: str
+    email: EmailStr
+    subject: str = "Portfolio contact"
+    message: str
+
+
+@app.get("/")
 def home():
-    return jsonify({"status": "backend running"})
+    return {"status": "backend running"}
 
 
-@app.route("/contact", methods=["POST"])
-def contact():
-    data = request.get_json(silent=True) or {}
-    name = (data.get("name") or "").strip()
-    email = (data.get("email") or "").strip()
-    subject = (data.get("subject") or "Portfolio contact").strip()
-    message = (data.get("message") or "").strip()
+@app.post("/contact")
+async def contact(payload: ContactPayload):
+    name = payload.name.strip()
+    email = payload.email.strip()
+    subject = payload.subject.strip()
+    message = payload.message.strip()
 
     if not all([name, email, message]):
-        return jsonify({"success": False, "message": "All fields are required"}), 400
+        return JSONResponse(
+            status_code=400,
+            content={"success": False, "message": "All fields are required"},
+        )
 
     if not RESEND_API_KEY:
-        return jsonify({"success": False, "message": "Email service not configured"}), 500
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": "Email service not configured"},
+        )
 
     try:
         response = requests.post(
@@ -64,15 +85,17 @@ def contact():
         )
 
         if response.status_code in (200, 202):
-            return jsonify({"success": True, "message": "Email sent!"})
+            return {"success": True, "message": "Email sent!"}
+
         print(f"Resend error {response.status_code}: {response.text}")
-        return jsonify({"success": False, "message": "Failed to send"}), 500
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": "Failed to send"},
+        )
 
     except Exception as e:
         print(f"Error: {e}")
-        return jsonify({"success": False, "message": "Failed to send email"}), 500
-
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+        return JSONResponse(
+            status_code=500,
+            content={"success": False, "message": "Failed to send email"},
+        )
